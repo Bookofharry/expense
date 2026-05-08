@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const generateToken = require("../utils/generateToken");
+const { logAuditAction } = require("../utils/auditLogger");
 
 const sanitizeUser = (user) => ({
   id: user._id,
@@ -34,13 +35,26 @@ const registerUser = asyncHandler(async (req, res) => {
     role: isBootstrapAdmin ? "Admin" : role || "Clerk",
   });
 
+  const sanitizedNewUser = sanitizeUser(newUser);
+
+  // We manually mock req.user if it's the first admin so the logger has an actor
+  if (isBootstrapAdmin) req.user = newUser;
+
+  await logAuditAction({
+    req,
+    action: "USER_REGISTERED",
+    targetModel: "User",
+    targetId: newUser._id,
+    payload: { registeredRole: newUser.role, email: newUser.email },
+  });
+
   res.status(201).json({
     success: true,
     message: isBootstrapAdmin
       ? "First admin account created successfully."
       : "Staff account created successfully.",
     data: {
-      user: sanitizeUser(newUser),
+      user: sanitizedNewUser,
       token: generateToken(newUser._id),
     },
   });
@@ -56,11 +70,22 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password.");
   }
 
+  const sanitizedUser = sanitizeUser(user);
+
+  req.user = user; // Set req.user so audit logger knows who is logging in
+  await logAuditAction({
+    req,
+    action: "USER_LOGIN",
+    targetModel: "User",
+    targetId: user._id,
+    payload: { email: user.email },
+  });
+
   res.status(200).json({
     success: true,
     message: "Login successful.",
     data: {
-      user: sanitizeUser(user),
+      user: sanitizedUser,
       token: generateToken(user._id),
     },
   });

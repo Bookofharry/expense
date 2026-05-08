@@ -9,6 +9,7 @@ import {
   Users,
   X,
   LayoutDashboard,
+  Shield,
 } from "lucide-react";
 
 import { useAuth } from "../lib/AuthContext";
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { label: "Income", to: "/income", icon: Banknote },
   { label: "Budgets", to: "/budgets", icon: ClipboardList },
   { label: "Staff", to: "/staff", icon: Users, adminOnly: true },
+  { label: "Audit Logs", to: "/audit", icon: Shield, adminOnly: true },
 ];
 
 export function AppShell() {

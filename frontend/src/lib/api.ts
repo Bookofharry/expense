@@ -86,6 +86,9 @@ export const createStaffUser = (payload: {
 export const fetchDashboardSummary = (token: string) =>
   apiRequest<DashboardSummary>("/dashboard/summary", { token });
 
+export const fetchAuditLogs = (token: string, page = 1, limit = 50) =>
+  apiRequest<AuditLog[]>(`/audit?page=${page}&limit=${limit}`, { token });
+
 export const fetchIncomes = (token: string) => apiRequest<IncomeRecord[]>("/income", { token });
 
 export const createIncomeEntry = (payload: {

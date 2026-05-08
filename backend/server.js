@@ -9,6 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const incomeRoutes = require("./routes/incomeRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/income", incomeRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/audit", auditRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

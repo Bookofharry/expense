@@ -1,5 +1,6 @@
 const Income = require("../models/Income");
 const asyncHandler = require("../utils/asyncHandler");
+const { logAuditAction } = require("../utils/auditLogger");
 
 const buildIncomeFilters = (query) => {
   const filters = {};
@@ -41,6 +42,17 @@ const createIncome = asyncHandler(async (req, res) => {
   });
 
   const populatedIncome = await Income.findById(income._id).populate("createdBy", "name email role");
+
+  await logAuditAction({
+    req,
+    action: "INCOME_LOGGED",
+    targetModel: "Income",
+    targetId: income._id,
+    payload: {
+      amount: income.amount,
+      category: income.category,
+    },
+  });
 
   res.status(201).json({
     success: true,

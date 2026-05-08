@@ -73,24 +73,45 @@ export interface ActivityItem {
   };
 }
 
+export interface StatusBanner {
+  label: "Optimal" | "Warning" | "Critical";
+  message: string;
+}
+
+export interface FinancialSnapshot {
+  totalIncomeThisMonth: number;
+  totalPendingBudgetDemands: number;
+  totalApprovedExpenditureThisMonth: number;
+  currentCashPosition: number;
+  formatted: {
+    totalIncomeThisMonth: string;
+    totalPendingBudgetDemands: string;
+    totalApprovedExpenditureThisMonth: string;
+    currentCashPosition: string;
+  };
+}
+
 export interface DashboardSummary {
-  statusBanner: {
-    label: "Optimal" | "Warning" | "Critical";
-    message: string;
-  };
-  financialSnapshot: {
-    totalIncomeThisMonth: number;
-    totalPendingBudgetDemands: number;
-    totalApprovedExpenditureThisMonth: number;
-    currentCashPosition: number;
-    formatted: {
-      totalIncomeThisMonth: string;
-      totalPendingBudgetDemands: string;
-      totalApprovedExpenditureThisMonth: string;
-      currentCashPosition: string;
-    };
-  };
+  statusBanner: StatusBanner;
+  financialSnapshot: FinancialSnapshot;
   activityFeed: ActivityItem[];
+}
+
+export interface AuditLog {
+  _id: string;
+  actor: {
+    _id: string;
+    name: string;
+    email: string;
+    role: "Admin" | "Clerk" | "Instructor";
+  };
+  action: string;
+  targetModel: string;
+  targetId: string;
+  payload: any;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
 }
 
 export interface ApiEnvelope<T> {

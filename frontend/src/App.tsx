@@ -6,6 +6,7 @@ import { DashboardScreen } from "./components/DashboardScreen";
 import { IncomeScreen } from "./components/IncomeScreen";
 import { BudgetsScreen } from "./components/BudgetsScreen";
 import { StaffScreen } from "./components/StaffScreen";
+import { AuditScreen } from "./components/AuditScreen";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export function App() {
@@ -29,6 +30,14 @@ export function App() {
           element={
             <ProtectedRoute adminOnly>
               <StaffScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/audit"
+          element={
+            <ProtectedRoute adminOnly>
+              <AuditScreen />
             </ProtectedRoute>
           }
         />

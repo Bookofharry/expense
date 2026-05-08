@@ -1,5 +1,6 @@
 const BudgetDemand = require("../models/BudgetDemand");
 const asyncHandler = require("../utils/asyncHandler");
+const { logAuditAction } = require("../utils/auditLogger");
 
 const createBudgetDemand = asyncHandler(async (req, res) => {
   if (req.user.role === "Admin") {
@@ -15,6 +16,18 @@ const createBudgetDemand = asyncHandler(async (req, res) => {
   const populatedBudget = await BudgetDemand.findById(budgetDemand._id)
     .populate("createdBy", "name email role")
     .populate("reviewedBy", "name email role");
+
+  await logAuditAction({
+    req,
+    action: "BUDGET_CREATED",
+    targetModel: "BudgetDemand",
+    targetId: budgetDemand._id,
+    payload: {
+      title: budgetDemand.title,
+      amount: budgetDemand.amount,
+      priority: budgetDemand.priority,
+    },
+  });
 
   res.status(201).json({
     success: true,
@@ -69,6 +82,22 @@ const reviewBudgetDemandByStatus = async (req, res, status) => {
   const reviewedBudget = await BudgetDemand.findById(budgetDemand._id)
     .populate("createdBy", "name email role")
     .populate("reviewedBy", "name email role");
+
+  const actionMap = {
+    Approved: "BUDGET_APPROVED",
+    Rejected: "BUDGET_REJECTED",
+  };
+
+  await logAuditAction({
+    req,
+    action: actionMap[status],
+    targetModel: "BudgetDemand",
+    targetId: budgetDemand._id,
+    payload: {
+      status,
+      reviewNote: budgetDemand.reviewNote,
+    },
+  });
 
   res.status(200).json({
     success: true,
