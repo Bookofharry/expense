@@ -83,11 +83,15 @@ export interface FinancialSnapshot {
   totalPendingBudgetDemands: number;
   totalApprovedExpenditureThisMonth: number;
   currentCashPosition: number;
+  allTimeIncome: number;
+  allTimeApprovedExpenditure: number;
   formatted: {
     totalIncomeThisMonth: string;
     totalPendingBudgetDemands: string;
     totalApprovedExpenditureThisMonth: string;
     currentCashPosition: string;
+    allTimeIncome: string;
+    allTimeApprovedExpenditure: string;
   };
 }
 

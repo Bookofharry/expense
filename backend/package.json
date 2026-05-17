@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "eslint .",
+    "test": "jest --runInBand --detectOpenHandles"
   },
   "keywords": [
     "techminds",
@@ -27,7 +29,12 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "jest": "^30.4.1",
+    "mongodb-memory-server": "^11.1.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.2.2"
   },
   "engines": {
     "node": ">=18"

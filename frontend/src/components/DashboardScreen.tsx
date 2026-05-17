@@ -98,9 +98,10 @@ export function DashboardScreen() {
       icon: <TrendingUp className="h-5 w-5 text-emerald-400" />,
     },
     {
-      label: "Pending Budget Demands",
-      value: formatCurrency(financialSnapshot.totalPendingBudgetDemands),
-      icon: <ClipboardList className="h-5 w-5 text-amber-400" />,
+      label: "Total Income (All Time)",
+      value: formatCurrency(financialSnapshot.allTimeIncome),
+      icon: <Banknote className="h-5 w-5 text-emerald-500" />,
+      adminOnly: true,
     },
     {
       label: "Approved Expenditure (This Month)",
@@ -108,11 +109,22 @@ export function DashboardScreen() {
       icon: <TrendingDown className="h-5 w-5 text-rose-400" />,
     },
     {
+      label: "Approved Expenditure (All Time)",
+      value: formatCurrency(financialSnapshot.allTimeApprovedExpenditure),
+      icon: <TrendingDown className="h-5 w-5 text-rose-500" />,
+      adminOnly: true,
+    },
+    {
+      label: "Pending Budget Demands",
+      value: formatCurrency(financialSnapshot.totalPendingBudgetDemands),
+      icon: <ClipboardList className="h-5 w-5 text-amber-400" />,
+    },
+    {
       label: "Current Cash Position",
       value: formatCurrency(financialSnapshot.currentCashPosition),
       icon: <Wallet className="h-5 w-5 text-indigo-400" />,
     },
-  ];
+  ].filter(card => !card.adminOnly || isAdmin);
 
   return (
     <div className="space-y-6">
@@ -138,7 +150,7 @@ export function DashboardScreen() {
       </div>
 
       {/* Financial snapshot cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-2 ${isAdmin ? 'xl:grid-cols-3' : 'xl:grid-cols-4'}`}>
         {cards.map((card) => (
           <div key={card.label} className="glass-subpanel p-5">
             <div className="flex items-center justify-between">
