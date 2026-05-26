@@ -10,6 +10,8 @@ const incomeRoutes = require("./routes/incomeRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const auditRoutes = require("./routes/auditRoutes");
+const salaryRoutes = require("./routes/salaryRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config();
@@ -37,17 +39,14 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-// Health check
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ success: true, message: "TechMinds backend is running." });
-});
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/income", incomeRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/salary", salaryRoutes);
+app.use("/api/employees", employeeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

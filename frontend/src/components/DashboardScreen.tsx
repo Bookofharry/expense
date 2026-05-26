@@ -115,6 +115,12 @@ export function DashboardScreen() {
       adminOnly: true,
     },
     {
+      label: "Salary Paid (This Month)",
+      value: formatCurrency(financialSnapshot.totalSalaryPaidThisMonth),
+      icon: <Wallet className="h-5 w-5 text-amber-400" />,
+      adminOnly: true,
+    },
+    {
       label: "Pending Budget Demands",
       value: formatCurrency(financialSnapshot.totalPendingBudgetDemands),
       icon: <ClipboardList className="h-5 w-5 text-amber-400" />,

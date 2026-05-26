@@ -26,20 +26,26 @@ export function IncomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<IncomeRecord | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const LIMIT = 25;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage = page) => {
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchIncomes(token);
-      setRecords(data);
+      const result = await fetchIncomes(token, targetPage, LIMIT);
+      setRecords(result.data);
+      setTotalPages(result.totalPages);
+      setTotalCount(result.totalCount);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load income records.");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, page]);
 
   useEffect(() => {
     load();
@@ -47,7 +53,13 @@ export function IncomeScreen() {
 
   const handleCreated = () => {
     setIsModalOpen(false);
-    load();
+    setPage(1);
+    load(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    load(newPage);
   };
 
   return (
@@ -77,7 +89,7 @@ export function IncomeScreen() {
         <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
           <XCircle className="h-10 w-10 text-rose-400" />
           <p className="text-sm text-rose-300">{error}</p>
-          <button type="button" className="secondary-button" onClick={load}>
+          <button type="button" className="secondary-button" onClick={() => load()}>
             Retry
           </button>
         </div>
@@ -144,6 +156,36 @@ export function IncomeScreen() {
         record={selectedRecord}
         onClose={() => setSelectedRecord(null)}
       />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-white/8 pt-4">
+          <p className="text-xs text-slate-500">
+            Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, totalCount)} of {totalCount} records
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="secondary-button px-3 py-2 text-xs disabled:opacity-40"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1 || loading}
+            >
+              ← Prev
+            </button>
+            <span className="text-xs text-slate-400">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              className="secondary-button px-3 py-2 text-xs disabled:opacity-40"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= totalPages || loading}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

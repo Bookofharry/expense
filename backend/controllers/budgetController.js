@@ -47,14 +47,26 @@ const getBudgetDemands = asyncHandler(async (req, res) => {
     filters.priority = req.query.priority;
   }
 
-  const budgetDemands = await BudgetDemand.find(filters)
-    .populate("createdBy", "name email role")
-    .populate("reviewedBy", "name email role")
-    .sort({ createdAt: -1 });
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
+  const skip = (page - 1) * limit;
+
+  const [budgetDemands, totalCount] = await Promise.all([
+    BudgetDemand.find(filters)
+      .populate("createdBy", "name email role")
+      .populate("reviewedBy", "name email role")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    BudgetDemand.countDocuments(filters),
+  ]);
 
   res.status(200).json({
     success: true,
     count: budgetDemands.length,
+    totalCount,
+    totalPages: Math.ceil(totalCount / limit),
+    page,
     data: budgetDemands,
   });
 });

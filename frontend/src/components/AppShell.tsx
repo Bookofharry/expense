@@ -4,6 +4,7 @@ import {
   BarChart3,
   Banknote,
   ClipboardList,
+  Coins,
   LogOut,
   Menu,
   Users,
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { label: "Income", to: "/income", icon: Banknote },
   { label: "Budgets", to: "/budgets", icon: ClipboardList },
   { label: "Staff", to: "/staff", icon: Users, adminOnly: true },
+  { label: "Payroll", to: "/payroll", icon: Coins, adminOnly: true },
   { label: "Audit Logs", to: "/audit", icon: Shield, adminOnly: true },
 ];
 

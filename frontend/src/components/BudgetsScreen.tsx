@@ -42,20 +42,26 @@ export function BudgetsScreen() {
   const [reviewNote, setReviewNote] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [selectedDemand, setSelectedDemand] = useState<BudgetDemand | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const LIMIT = 25;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage = page) => {
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchBudgetDemands(token);
-      setDemands(data);
+      const result = await fetchBudgetDemands(token, targetPage, LIMIT);
+      setDemands(result.data);
+      setTotalPages(result.totalPages);
+      setTotalCount(result.totalCount);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load budget demands.");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, page]);
 
   useEffect(() => {
     load();
@@ -63,7 +69,13 @@ export function BudgetsScreen() {
 
   const handleCreated = () => {
     setIsCreateOpen(false);
-    load();
+    setPage(1);
+    load(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    load(newPage);
   };
 
   const openReview = (id: string, action: "approve" | "reject") => {
@@ -79,7 +91,8 @@ export function BudgetsScreen() {
       const fn = reviewAction === "approve" ? approveBudgetDemandEntry : rejectBudgetDemandEntry;
       await fn({ token, id: reviewingId, reviewNote: reviewNote.trim() || undefined });
       setReviewingId(null);
-      load();
+      setPage(1);
+      load(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review failed.");
     } finally {
@@ -114,7 +127,7 @@ export function BudgetsScreen() {
         <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
           <XCircle className="h-10 w-10 text-rose-400" />
           <p className="text-sm text-rose-300">{error}</p>
-          <button type="button" className="secondary-button" onClick={load}>
+          <button type="button" className="secondary-button" onClick={() => load()}>
             Retry
           </button>
         </div>
@@ -275,6 +288,36 @@ export function BudgetsScreen() {
         demand={selectedDemand}
         onClose={() => setSelectedDemand(null)}
       />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-white/8 pt-4">
+          <p className="text-xs text-slate-500">
+            Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, totalCount)} of {totalCount} demands
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="secondary-button px-3 py-2 text-xs disabled:opacity-40"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page <= 1 || loading}
+            >
+              ← Prev
+            </button>
+            <span className="text-xs text-slate-400">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              className="secondary-button px-3 py-2 text-xs disabled:opacity-40"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= totalPages || loading}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -500,7 +543,7 @@ function ViewBudgetModal({
                 {demand.reviewNote || "No specific notes provided by the admin."}
               </p>
               <p className="mt-3 text-xs text-slate-500">
-                Reviewed by {demand.reviewedBy?.name || "Admin"} on {formatDate(demand.reviewedAt)}
+                Reviewed by {demand.reviewedBy?.name || "Admin"} on {demand.reviewedAt ? formatDate(demand.reviewedAt) : "—"}
               </p>
             </div>
           )}

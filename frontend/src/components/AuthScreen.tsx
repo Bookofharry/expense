@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 
 interface AuthScreenProps {
-  loading?: boolean;
   error?: string | null;
   success?: string | null;
 }

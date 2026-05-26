@@ -2,8 +2,6 @@ export type UserRole = "Admin" | "Clerk" | "Instructor";
 export type IncomeCategory = "Tuition" | "Workspace" | "ID Card" | "Other";
 export type BudgetPriority = "Low" | "Medium" | "High" | "Urgent";
 export type BudgetStatus = "Pending" | "Approved" | "Rejected";
-export type AppView = "dashboard" | "income" | "budgets" | "staff";
-
 export interface User {
   id: string;
   name: string;
@@ -82,16 +80,20 @@ export interface FinancialSnapshot {
   totalIncomeThisMonth: number;
   totalPendingBudgetDemands: number;
   totalApprovedExpenditureThisMonth: number;
+  totalSalaryPaidThisMonth: number;
   currentCashPosition: number;
   allTimeIncome: number;
   allTimeApprovedExpenditure: number;
+  allTimeSalaryPaid: number;
   formatted: {
     totalIncomeThisMonth: string;
     totalPendingBudgetDemands: string;
     totalApprovedExpenditureThisMonth: string;
+    totalSalaryPaidThisMonth: string;
     currentCashPosition: string;
     allTimeIncome: string;
     allTimeApprovedExpenditure: string;
+    allTimeSalaryPaid: string;
   };
 }
 
@@ -99,6 +101,43 @@ export interface DashboardSummary {
   statusBanner: StatusBanner;
   financialSnapshot: FinancialSnapshot;
   activityFeed: ActivityItem[];
+}
+
+export interface Employee {
+  _id: string;
+  name: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface SalaryPayment {
+  _id: string;
+  staff: Employee;
+  amount: number;
+  formattedAmount: string;
+  payPeriod: string;
+  paymentDate: string;
+  note: string;
+  paidBy: UserReference;
+  createdAt: string;
+}
+
+export interface SalaryPageResponse {
+  success: boolean;
+  count: number;
+  totalCount: number;
+  totalPages: number;
+  page: number;
+  summary: {
+    allTimeSalary: number;
+    thisMonthSalary: number;
+    formatted: {
+      allTimeSalary: string;
+      thisMonthSalary: string;
+    };
+  };
+  data: SalaryPayment[];
 }
 
 export interface AuditLog {
@@ -122,5 +161,15 @@ export interface ApiEnvelope<T> {
   success: boolean;
   message?: string;
   count?: number;
+  data: T;
+}
+
+export interface PaginatedEnvelope<T> {
+  success: boolean;
+  message?: string;
+  count: number;
+  totalCount: number;
+  totalPages: number;
+  page: number;
   data: T;
 }

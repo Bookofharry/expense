@@ -6,7 +6,11 @@ import type {
   DashboardSummary,
   IncomeCategory,
   IncomeRecord,
+  PaginatedEnvelope,
+  SalaryPayment,
+  SalaryPageResponse,
   User,
+  Employee,
   UserRole,
   AuditLog,
 } from "../types";
@@ -50,6 +54,31 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
   return payload.data;
 }
 
+async function apiRequestPaginated<T>(
+  path: string,
+  options: RequestOptions = {}
+): Promise<PaginatedEnvelope<T>> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: options.method ?? "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  const payload = (await response.json().catch(() => null)) as PaginatedEnvelope<T> | null;
+
+  if (!response.ok || !payload?.success) {
+    throw new ApiError(
+      (payload as unknown as ApiEnvelope<T>)?.message ?? "Request failed.",
+      response.status
+    );
+  }
+
+  return payload;
+}
+
 export const loginUser = (email: string, password: string) =>
   apiRequest<AuthData>("/auth/login", {
     method: "POST",
@@ -90,7 +119,8 @@ export const fetchDashboardSummary = (token: string) =>
 export const fetchAuditLogs = (token: string, page = 1, limit = 50) =>
   apiRequest<AuditLog[]>(`/audit?page=${page}&limit=${limit}`, { token });
 
-export const fetchIncomes = (token: string) => apiRequest<IncomeRecord[]>("/income", { token });
+export const fetchIncomes = (token: string, page = 1, limit = 25) =>
+  apiRequestPaginated<IncomeRecord[]>(`/income?page=${page}&limit=${limit}`, { token });
 
 export const createIncomeEntry = (payload: {
   token: string;
@@ -112,8 +142,8 @@ export const createIncomeEntry = (payload: {
     },
   });
 
-export const fetchBudgetDemands = (token: string) =>
-  apiRequest<BudgetDemand[]>("/budgets", { token });
+export const fetchBudgetDemands = (token: string, page = 1, limit = 25) =>
+  apiRequestPaginated<BudgetDemand[]>(`/budgets?page=${page}&limit=${limit}`, { token });
 
 export const createBudgetDemandEntry = (payload: {
   token: string;
@@ -160,3 +190,56 @@ export const rejectBudgetDemandEntry = (payload: {
   });
 
 export const fetchStaffUsers = (token: string) => apiRequest<User[]>("/auth/staff", { token });
+
+export const fetchEmployees = (token: string) => apiRequest<Employee[]>("/employees", { token });
+
+export const createEmployee = (payload: { token: string; name: string; role: string }) =>
+  apiRequest<Employee>("/employees", {
+    method: "POST",
+    token: payload.token,
+    body: {
+      name: payload.name,
+      role: payload.role,
+    },
+  });
+
+export const fetchSalaryPayments = (
+  token: string,
+  page = 1,
+  limit = 25
+): Promise<SalaryPageResponse> =>
+  fetch(
+    `${API_BASE_URL}/salary?page=${page}&limit=${limit}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  ).then(async (res) => {
+    const payload = await res.json().catch(() => null);
+    if (!res.ok || !payload?.success) {
+      throw new ApiError(payload?.message ?? "Request failed.", res.status);
+    }
+    return payload as SalaryPageResponse;
+  });
+
+export const logSalaryPaymentEntry = (payload: {
+  token: string;
+  staffId: string;
+  amount: number;
+  payPeriod: string;
+  paymentDate: string;
+  note?: string;
+}) =>
+  apiRequest<SalaryPayment>("/salary", {
+    method: "POST",
+    token: payload.token,
+    body: {
+      staffId: payload.staffId,
+      amount: payload.amount,
+      payPeriod: payload.payPeriod,
+      paymentDate: payload.paymentDate,
+      note: payload.note,
+    },
+  });

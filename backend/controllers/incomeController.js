@@ -63,13 +63,26 @@ const createIncome = asyncHandler(async (req, res) => {
 
 const getIncomes = asyncHandler(async (req, res) => {
   const filters = buildIncomeFilters(req.query);
-  const incomes = await Income.find(filters)
-    .populate("createdBy", "name email role")
-    .sort({ entryDate: -1, createdAt: -1 });
+
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
+  const skip = (page - 1) * limit;
+
+  const [incomes, totalCount] = await Promise.all([
+    Income.find(filters)
+      .populate("createdBy", "name email role")
+      .sort({ entryDate: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Income.countDocuments(filters),
+  ]);
 
   res.status(200).json({
     success: true,
     count: incomes.length,
+    totalCount,
+    totalPages: Math.ceil(totalCount / limit),
+    page,
     data: incomes,
   });
 });

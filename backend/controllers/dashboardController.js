@@ -1,5 +1,6 @@
 const Income = require("../models/Income");
 const BudgetDemand = require("../models/BudgetDemand");
+const SalaryPayment = require("../models/SalaryPayment");
 const asyncHandler = require("../utils/asyncHandler");
 const { formatNaira } = require("../utils/formatters");
 
@@ -55,6 +56,8 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     totalPendingBudgetAmount,
     allTimeIncome,
     allTimeApprovedExpenditure,
+    totalSalaryPaidThisMonth,
+    allTimeSalaryPaid,
     latestIncomes,
     latestApprovedBudgets,
   ] = await Promise.all([
@@ -66,6 +69,8 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     sumAmounts(BudgetDemand, { status: "Pending" }),
     sumAmounts(Income, {}),
     sumAmounts(BudgetDemand, { status: "Approved" }),
+    sumAmounts(SalaryPayment, { payPeriod: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}` }),
+    sumAmounts(SalaryPayment, {}),
     Income.find()
       .populate("createdBy", "name role")
       .sort({ entryDate: -1, createdAt: -1 })
@@ -77,7 +82,7 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
       .limit(5),
   ]);
 
-  const currentCashPosition = allTimeIncome - allTimeApprovedExpenditure;
+  const currentCashPosition = allTimeIncome - allTimeApprovedExpenditure - allTimeSalaryPaid;
   const statusBanner = buildStatusBanner({
     currentCashPosition,
     pendingBudgetAmount: totalPendingBudgetAmount,
@@ -130,16 +135,20 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
         totalIncomeThisMonth,
         totalPendingBudgetDemands: totalPendingBudgetAmount,
         totalApprovedExpenditureThisMonth,
+        totalSalaryPaidThisMonth,
         currentCashPosition,
         allTimeIncome,
         allTimeApprovedExpenditure,
+        allTimeSalaryPaid,
         formatted: {
           totalIncomeThisMonth: formatNaira(totalIncomeThisMonth),
           totalPendingBudgetDemands: formatNaira(totalPendingBudgetAmount),
           totalApprovedExpenditureThisMonth: formatNaira(totalApprovedExpenditureThisMonth),
+          totalSalaryPaidThisMonth: formatNaira(totalSalaryPaidThisMonth),
           currentCashPosition: formatNaira(currentCashPosition),
           allTimeIncome: formatNaira(allTimeIncome),
           allTimeApprovedExpenditure: formatNaira(allTimeApprovedExpenditure),
+          allTimeSalaryPaid: formatNaira(allTimeSalaryPaid),
         },
       },
       activityFeed,

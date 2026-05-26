@@ -3,40 +3,30 @@ import { fetchAuditLogs } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { useAuth } from "../lib/AuthContext";
 import type { AuditLog } from "../types";
-import { ShieldAlert, Server, MapPin, MonitorSmartphone, KeySquare } from "lucide-react";
+import { MapPin, MonitorSmartphone, KeySquare } from "lucide-react";
 
 export function AuditScreen() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadLogs = useCallback(async () => {
-    if (!token || user?.role !== "Admin") return;
+    if (!token) return;
     try {
       setLoading(true);
       const data = await fetchAuditLogs(token);
       setLogs(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to load audit logs.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load audit logs.");
     } finally {
       setLoading(false);
     }
-  }, [token, user]);
+  }, [token]);
 
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
-
-  if (user?.role !== "Admin") {
-    return (
-      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <ShieldAlert className="mb-4 h-12 w-12 text-rose-500/50" />
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
-        <p className="mt-2 text-slate-400">Only administrators can view the audit trail.</p>
-      </div>
-    );
-  }
 
   const renderPayload = (payload: any) => {
     if (!payload || Object.keys(payload).length === 0) return null;
@@ -50,8 +40,9 @@ export function AuditScreen() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Audit Trail</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="section-kicker">Administration</p>
+        <h1 className="mt-2 text-2xl font-semibold text-white">Audit Trail</h1>
+        <p className="mt-1 text-sm text-slate-400">
           Immutable ledger of all critical system actions.
         </p>
       </div>
