@@ -157,6 +157,48 @@ export interface AuditLog {
   createdAt: string;
 }
 
+export type EventCategory = "Bootcamp" | "Workshop" | "Seminar" | "Other";
+export type EventStatus = "Upcoming" | "Ongoing" | "Completed" | "Cancelled";
+export type RegistrationStatus = "Pending" | "Confirmed" | "Attended" | "Cancelled";
+export type RegistrationSource = "Website" | "Instagram" | "Referral" | "Other";
+
+export interface TechEvent {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  category: EventCategory;
+  date: string;
+  registrationDeadline?: string;
+  venue: string;
+  price: number;
+  capacity?: number;
+  status: EventStatus;
+  createdAt: string;
+}
+
+export interface EventRegistration {
+  _id: string;
+  event: string;
+  name: string;
+  email: string;
+  phone: string;
+  source: RegistrationSource;
+  notes: string;
+  status: RegistrationStatus;
+  createdAt: string;
+}
+
+export interface EventRegistrationsResponse {
+  success: boolean;
+  count: number;
+  totalCount: number;
+  totalPages: number;
+  page: number;
+  eventTitle: string;
+  data: EventRegistration[];
+}
+
 export interface ApiEnvelope<T> {
   success: boolean;
   message?: string;

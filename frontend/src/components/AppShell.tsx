@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Banknote,
+  CalendarDays,
   ClipboardList,
   Coins,
   LogOut,
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { label: "Budgets", to: "/budgets", icon: ClipboardList },
   { label: "Staff", to: "/staff", icon: Users, adminOnly: true },
   { label: "Payroll", to: "/payroll", icon: Coins, adminOnly: true },
+  { label: "Events", to: "/events", icon: CalendarDays, adminOnly: true },
   { label: "Audit Logs", to: "/audit", icon: Shield, adminOnly: true },
 ];
 

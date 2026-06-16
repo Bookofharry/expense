@@ -8,6 +8,7 @@ import { BudgetsScreen } from "./components/BudgetsScreen";
 import { StaffScreen } from "./components/StaffScreen";
 import { AuditScreen } from "./components/AuditScreen";
 import { PayrollScreen } from "./components/PayrollScreen";
+import { EventsScreen } from "./components/EventsScreen";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export function App() {
@@ -39,6 +40,14 @@ export function App() {
           element={
             <ProtectedRoute adminOnly>
               <PayrollScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute adminOnly>
+              <EventsScreen />
             </ProtectedRoute>
           }
         />

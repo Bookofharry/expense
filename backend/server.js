@@ -12,6 +12,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
+const eventRoutes = require("./routes/eventRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config();
@@ -20,9 +21,21 @@ connectDB();
 
 const app = express();
 
+const rawOrigins = process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "*";
+const allowedOrigins =
+  rawOrigins === "*" ? "*" : rawOrigins.split(",").map((o) => o.trim()).filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "*",
+    origin:
+      allowedOrigins === "*"
+        ? "*"
+        : (origin, callback) => {
+            // Allow requests with no origin (Postman, mobile apps, curl)
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin)) return callback(null, true);
+            callback(new Error(`CORS: origin ${origin} is not allowed.`));
+          },
     credentials: true,
   })
 );
@@ -47,6 +60,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/salary", salaryRoutes);
 app.use("/api/employees", employeeRoutes);
+app.use("/api/events", eventRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

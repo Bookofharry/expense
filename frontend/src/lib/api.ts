@@ -13,6 +13,12 @@ import type {
   Employee,
   UserRole,
   AuditLog,
+  TechEvent,
+  EventCategory,
+  EventStatus,
+  EventRegistration,
+  EventRegistrationsResponse,
+  RegistrationStatus,
 } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
@@ -27,7 +33,7 @@ export class ApiError extends Error {
   }
 }
 
-type HttpMethod = "GET" | "POST" | "PATCH";
+type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 interface RequestOptions {
   method?: HttpMethod;
@@ -242,4 +248,99 @@ export const logSalaryPaymentEntry = (payload: {
       paymentDate: payload.paymentDate,
       note: payload.note,
     },
+  });
+
+// ─── Events ───────────────────────────────────────────────────────────────
+
+export const fetchAllEvents = (token: string, page = 1, limit = 20) =>
+  apiRequestPaginated<TechEvent[]>(`/events?status=all&page=${page}&limit=${limit}`, { token });
+
+export const createEvent = (payload: {
+  token: string;
+  title: string;
+  category: EventCategory;
+  date: string;
+  registrationDeadline?: string;
+  venue?: string;
+  description?: string;
+  price?: number;
+  capacity?: number;
+  status?: EventStatus;
+}) =>
+  apiRequest<TechEvent>("/events", {
+    method: "POST",
+    token: payload.token,
+    body: {
+      title: payload.title,
+      category: payload.category,
+      date: payload.date,
+      registrationDeadline: payload.registrationDeadline,
+      venue: payload.venue,
+      description: payload.description,
+      price: payload.price,
+      capacity: payload.capacity,
+      status: payload.status,
+    },
+  });
+
+export const updateEvent = (payload: {
+  token: string;
+  id: string;
+  title?: string;
+  category?: EventCategory;
+  date?: string;
+  registrationDeadline?: string;
+  venue?: string;
+  description?: string;
+  price?: number;
+  capacity?: number;
+  status?: EventStatus;
+}) =>
+  apiRequest<TechEvent>(`/events/${payload.id}`, {
+    method: "PATCH",
+    token: payload.token,
+    body: {
+      title: payload.title,
+      category: payload.category,
+      date: payload.date,
+      registrationDeadline: payload.registrationDeadline,
+      venue: payload.venue,
+      description: payload.description,
+      price: payload.price,
+      capacity: payload.capacity,
+      status: payload.status,
+    },
+  });
+
+export const deleteEvent = (token: string, id: string) =>
+  apiRequest<void>(`/events/${id}`, { method: "DELETE", token });
+
+export const fetchEventRegistrations = (
+  token: string,
+  eventId: string,
+  page = 1,
+  limit = 25
+): Promise<EventRegistrationsResponse> =>
+  fetch(`${API_BASE_URL}/events/${eventId}/registrations?page=${page}&limit=${limit}`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  }).then(async (res) => {
+    const payload = await res.json().catch(() => null);
+    if (!res.ok || !payload?.success) {
+      throw new ApiError(payload?.message ?? "Request failed.", res.status);
+    }
+    return payload as EventRegistrationsResponse;
+  });
+
+export const updateRegistrationStatus = (
+  token: string,
+  regId: string,
+  status: RegistrationStatus
+) =>
+  apiRequest<EventRegistration>(`/events/registrations/${regId}`, {
+    method: "PATCH",
+    token,
+    body: { status },
   });
