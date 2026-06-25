@@ -80,3 +80,13 @@ export function getRegistrationStatusVariant(status: string): Variant {
   };
   return map[status] ?? "default";
 }
+
+export function getWorkspaceStatusVariant(status: string): Variant {
+  const map: Record<string, Variant> = {
+    Active: "approved",
+    "Expiring Soon": "pending",
+    Expired: "rejected",
+    Inactive: "low",
+  };
+  return map[status] ?? "default";
+}

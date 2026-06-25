@@ -3,11 +3,13 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Banknote,
+  Building2,
   CalendarDays,
   ClipboardList,
   Coins,
   LogOut,
   Menu,
+  Settings2,
   Users,
   X,
   LayoutDashboard,
@@ -22,16 +24,19 @@ interface NavItem {
   to: string;
   icon: typeof LayoutDashboard;
   adminOnly?: boolean;
+  roles?: string[]; // if set, only these roles see this item
 }
 
 const navItems: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Income", to: "/income", icon: Banknote },
   { label: "Budgets", to: "/budgets", icon: ClipboardList },
+  { label: "Workspace", to: "/workspace", icon: Building2, roles: ["Admin", "Clerk"] },
   { label: "Staff", to: "/staff", icon: Users, adminOnly: true },
   { label: "Payroll", to: "/payroll", icon: Coins, adminOnly: true },
   { label: "Events", to: "/events", icon: CalendarDays, adminOnly: true },
   { label: "Audit Logs", to: "/audit", icon: Shield, adminOnly: true },
+  { label: "Settings", to: "/settings", icon: Settings2, adminOnly: true },
 ];
 
 export function AppShell() {
@@ -52,9 +57,11 @@ export function AppShell() {
     navigate("/login", { replace: true });
   };
 
-  const visibleNavItems = navItems.filter(
-    (item) => !item.adminOnly || role === "Admin"
-  );
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.adminOnly) return role === "Admin";
+    if (item.roles) return item.roles.includes(role ?? "");
+    return true;
+  });
 
   const roleBadgeColor =
     role === "Admin"

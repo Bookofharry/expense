@@ -13,11 +13,30 @@ const auditRoutes = require("./routes/auditRoutes");
 const salaryRoutes = require("./routes/salaryRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const eventRoutes = require("./routes/eventRoutes");
+const workspaceRoutes = require("./routes/workspaceRoutes");
+const settingRoutes = require("./routes/settingRoutes");
+const Setting = require("./models/Setting");
+const { DEFAULT_WORKSPACE_SLOTS } = require("./utils/constants");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config();
 
-connectDB();
+const seedSettings = async () => {
+  const defaults = [
+    {
+      key: "workspace_total_slots",
+      value: DEFAULT_WORKSPACE_SLOTS,
+      label: "Workspace Total Slots",
+      description: "Maximum number of workspace slots available for rent in the hub.",
+      type: "number",
+    },
+  ];
+  for (const s of defaults) {
+    await Setting.findOneAndUpdate({ key: s.key }, { $setOnInsert: s }, { upsert: true });
+  }
+};
+
+connectDB().then(() => seedSettings().catch(console.error));
 
 const app = express();
 
@@ -61,6 +80,8 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/salary", salaryRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/workspace", workspaceRoutes);
+app.use("/api/settings", settingRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

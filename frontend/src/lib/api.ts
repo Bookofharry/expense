@@ -1,5 +1,6 @@
 import type {
   ApiEnvelope,
+  AppSetting,
   AuthData,
   BudgetDemand,
   BudgetPriority,
@@ -19,6 +20,10 @@ import type {
   EventRegistration,
   EventRegistrationsResponse,
   RegistrationStatus,
+  WorkspacePlan,
+  WorkspaceUser,
+  WorkspacePaymentRecord,
+  WorkspaceStats,
 } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
@@ -343,4 +348,90 @@ export const updateRegistrationStatus = (
     method: "PATCH",
     token,
     body: { status },
+  });
+
+// ─── Workspace ────────────────────────────────────────────────────────────────
+
+export const fetchWorkspaceStats = (token: string) =>
+  apiRequest<WorkspaceStats>("/workspace/stats", { token });
+
+export const fetchWorkspaceUsers = (
+  token: string,
+  page = 1,
+  limit = 25,
+  status = "All",
+  search = ""
+) => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (status && status !== "All") params.set("status", status);
+  if (search.trim()) params.set("search", search.trim());
+  return apiRequestPaginated<WorkspaceUser[]>(`/workspace?${params.toString()}`, { token });
+};
+
+export const registerWorkspaceUser = (payload: {
+  token: string;
+  name: string;
+  email: string;
+  phone: string;
+  slotNumber: number;
+  plan: WorkspacePlan;
+  startDate?: string;
+  notes?: string;
+}) =>
+  apiRequest<WorkspaceUser>("/workspace", {
+    method: "POST",
+    token: payload.token,
+    body: {
+      name: payload.name,
+      email: payload.email,
+      phone: payload.phone,
+      slotNumber: payload.slotNumber,
+      plan: payload.plan,
+      startDate: payload.startDate,
+      notes: payload.notes,
+    },
+  });
+
+export const renewWorkspaceUser = (payload: {
+  token: string;
+  id: string;
+  plan: WorkspacePlan;
+  startDate?: string;
+}) =>
+  apiRequest<WorkspaceUser>(`/workspace/${payload.id}/renew`, {
+    method: "POST",
+    token: payload.token,
+    body: { plan: payload.plan, startDate: payload.startDate },
+  });
+
+export const updateWorkspaceUserInfo = (payload: {
+  token: string;
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}) =>
+  apiRequest<WorkspaceUser>(`/workspace/${payload.id}`, {
+    method: "PATCH",
+    token: payload.token,
+    body: { name: payload.name, email: payload.email, phone: payload.phone, notes: payload.notes },
+  });
+
+export const deactivateWorkspaceUser = (token: string, id: string) =>
+  apiRequest<WorkspaceUser>(`/workspace/${id}/deactivate`, { method: "PATCH", token });
+
+export const fetchWorkspacePayments = (token: string, userId: string) =>
+  apiRequest<WorkspacePaymentRecord[]>(`/workspace/${userId}/payments`, { token });
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+export const fetchSettings = (token: string) =>
+  apiRequest<AppSetting[]>("/settings", { token });
+
+export const updateSetting = (token: string, key: string, value: number | string | boolean) =>
+  apiRequest<AppSetting>(`/settings/${key}`, {
+    method: "PATCH",
+    token,
+    body: { value },
   });

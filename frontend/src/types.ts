@@ -199,6 +199,58 @@ export interface EventRegistrationsResponse {
   data: EventRegistration[];
 }
 
+export type WorkspacePlan = "Day" | "Week" | "Month";
+export type WorkspaceStatus = "Active" | "Expiring Soon" | "Expired" | "Inactive";
+
+export interface WorkspaceUser {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  slotNumber: number;
+  status: WorkspaceStatus;
+  currentPlan: WorkspacePlan;
+  planStartDate: string;
+  planExpiryDate: string;
+  notes: string;
+  registeredBy?: UserReference;
+  deactivatedAt?: string;
+  createdAt: string;
+}
+
+export interface WorkspacePaymentRecord {
+  _id: string;
+  workspaceUser: string;
+  plan: WorkspacePlan;
+  amount: number;
+  startDate: string;
+  expiryDate: string;
+  recordedBy?: UserReference;
+  createdAt: string;
+}
+
+export interface WorkspaceStats {
+  totalSlots: number;
+  activeCount: number;
+  expiringSoonCount: number;
+  expiredCount: number;
+  inactiveCount: number;
+  availableCount: number;
+  occupiedSlotNumbers: number[];
+  availableSlotNumbers: number[];
+}
+
+export interface AppSetting {
+  _id: string;
+  key: string;
+  value: number | string | boolean;
+  label: string;
+  description: string;
+  type: "number" | "string" | "boolean";
+  updatedBy?: UserReference;
+  updatedAt: string;
+}
+
 export interface ApiEnvelope<T> {
   success: boolean;
   message?: string;

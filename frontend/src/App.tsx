@@ -9,6 +9,8 @@ import { StaffScreen } from "./components/StaffScreen";
 import { AuditScreen } from "./components/AuditScreen";
 import { PayrollScreen } from "./components/PayrollScreen";
 import { EventsScreen } from "./components/EventsScreen";
+import { WorkspaceScreen } from "./components/WorkspaceScreen";
+import { SettingsScreen } from "./components/SettingsScreen";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export function App() {
@@ -56,6 +58,16 @@ export function App() {
           element={
             <ProtectedRoute adminOnly>
               <AuditScreen />
+            </ProtectedRoute>
+          }
+        />
+        {/* Workspace: visible to Clerk + Admin (nav handles visibility; route is open to all auth) */}
+        <Route path="/workspace" element={<WorkspaceScreen />} />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute adminOnly>
+              <SettingsScreen />
             </ProtectedRoute>
           }
         />

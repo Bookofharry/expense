@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Banknote,
+  Building2,
   CheckCircle2,
   ClipboardList,
   Loader2,
@@ -14,10 +15,95 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../lib/AuthContext";
-import { fetchDashboardSummary } from "../lib/api";
+import { fetchDashboardSummary, fetchWorkspaceStats } from "../lib/api";
 import { formatCurrency, formatDateTime } from "../lib/format";
 import { EmptyState } from "./EmptyState";
-import type { DashboardSummary } from "../types";
+import type { DashboardSummary, WorkspaceStats } from "../types";
+
+// ─── Hub Widget ───────────────────────────────────────────────────────────────
+
+function HubWidget({
+  stats,
+  onManage,
+}: {
+  stats: WorkspaceStats;
+  onManage: () => void;
+}) {
+  const hasExpired = stats.expiredCount > 0;
+  const hasExpiring = stats.expiringSoonCount > 0;
+  const occupied = stats.totalSlots - stats.availableCount;
+
+  return (
+    <div className="glass-subpanel p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-indigo-400" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+            Hub Workspace
+          </h2>
+          {hasExpired && (
+            <span className="h-2 w-2 animate-pulse rounded-full bg-rose-400" title="Expired users need attention" />
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onManage}
+          className="flex items-center gap-1 text-xs text-indigo-400 transition hover:text-indigo-300"
+        >
+          Manage <ArrowRight className="h-3 w-3" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* Occupied slots */}
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-3 text-center">
+          <p className="text-xl font-bold text-white">
+            {occupied}
+            <span className="text-sm font-normal text-slate-500">/{stats.totalSlots}</span>
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">Slots Occupied</p>
+        </div>
+
+        {/* Active */}
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-emerald-400/15 bg-emerald-500/8 px-3 py-3 text-center">
+          <p className="text-xl font-bold text-emerald-300">{stats.activeCount}</p>
+          <p className="mt-0.5 text-xs text-slate-500">Active</p>
+        </div>
+
+        {/* Expiring Soon */}
+        <div
+          className={`flex flex-col items-center justify-center rounded-2xl px-3 py-3 text-center border ${
+            hasExpiring
+              ? "border-amber-400/25 bg-amber-500/10"
+              : "border-white/8 bg-white/[0.03]"
+          }`}
+        >
+          <p className={`text-xl font-bold ${hasExpiring ? "text-amber-300" : "text-slate-500"}`}>
+            {stats.expiringSoonCount}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">Expiring Soon</p>
+        </div>
+
+        {/* Expired */}
+        <div
+          className={`flex flex-col items-center justify-center rounded-2xl px-3 py-3 text-center border ${
+            hasExpired
+              ? "border-rose-400/25 bg-rose-500/10"
+              : "border-white/8 bg-white/[0.03]"
+          }`}
+        >
+          <p className={`text-xl font-bold ${hasExpired ? "text-rose-300" : "text-slate-500"}`}>
+            {stats.expiredCount}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">Expired</p>
+          {hasExpired && (
+            <p className="mt-0.5 text-[10px] font-medium text-rose-400">Needs action</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const bannerStyles = {
   Optimal: {
@@ -45,6 +131,7 @@ export function DashboardScreen() {
   const isAdmin = role === "Admin";
   const navigate = useNavigate();
   const [data, setData] = useState<DashboardSummary | null>(null);
+  const [workspaceStats, setWorkspaceStats] = useState<WorkspaceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,8 +140,14 @@ export function DashboardScreen() {
     setLoading(true);
     setError(null);
     try {
-      const summary = await fetchDashboardSummary(token);
-      setData(summary);
+      const [summaryResult, wsResult] = await Promise.allSettled([
+        fetchDashboardSummary(token),
+        fetchWorkspaceStats(token),
+      ]);
+      if (summaryResult.status === "fulfilled") setData(summaryResult.value);
+      else throw summaryResult.reason;
+      if (wsResult.status === "fulfilled") setWorkspaceStats(wsResult.value);
+      // workspace stats failure is non-critical — widget just won't show
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard.");
     } finally {
@@ -170,6 +263,11 @@ export function DashboardScreen() {
         ))}
       </div>
 
+      {/* Hub Workspace Widget — visible to Admin and Clerk */}
+      {workspaceStats && (role === "Admin" || role === "Clerk") && (
+        <HubWidget stats={workspaceStats} onManage={() => navigate("/workspace")} />
+      )}
+
       {/* Quick actions */}
       <div className="flex flex-wrap gap-3">
         {!isAdmin && (
@@ -198,7 +296,7 @@ export function DashboardScreen() {
 
       {/* Activity feed */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-white">Recent Activity</h2>
+        <h2 className="mb-4 text-lg font-semibold text-white">Live Activity</h2>
         {activityFeed.length === 0 ? (
           <EmptyState
             title="No activity yet"
