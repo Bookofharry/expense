@@ -1,3 +1,4 @@
+import { clearStoredSession } from "./storage";
 import type {
   ApiEnvelope,
   AppSetting,
@@ -46,6 +47,11 @@ interface RequestOptions {
   body?: Record<string, unknown>;
 }
 
+function handleSessionExpiry() {
+  clearStoredSession();
+  window.location.replace("/login");
+}
+
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method ?? "GET",
@@ -55,6 +61,12 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
+
+  // Token expired or invalidated — clear session and send to login immediately
+  if (response.status === 401 && options.token) {
+    handleSessionExpiry();
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
 
   const payload = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
 
@@ -77,6 +89,11 @@ async function apiRequestPaginated<T>(
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
+
+  if (response.status === 401 && options.token) {
+    handleSessionExpiry();
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
 
   const payload = (await response.json().catch(() => null)) as PaginatedEnvelope<T> | null;
 

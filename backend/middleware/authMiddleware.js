@@ -13,21 +13,27 @@ const protect = asyncHandler(async (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
 
+  // Verify signature and expiry — keep this isolated so DB errors don't get caught here
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select("-password");
-
-    if (!user) {
-      res.status(401);
-      throw new Error("User linked to this token no longer exists.");
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
     res.status(401);
-    throw new Error("Invalid or expired token.");
+    throw new Error(
+      err.name === "TokenExpiredError"
+        ? "Your session has expired. Please log in again."
+        : "Invalid token. Please log in again."
+    );
   }
+
+  const user = await User.findById(decoded.userId).select("-password");
+  if (!user) {
+    res.status(401);
+    throw new Error("Account no longer exists. Please contact an admin.");
+  }
+
+  req.user = user;
+  next();
 });
 
 const adminOnly = (req, res, next) => {
