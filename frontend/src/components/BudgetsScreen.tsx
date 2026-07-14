@@ -147,7 +147,8 @@ export function BudgetsScreen() {
                 <th className="px-4 py-3">Priority</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="hidden px-4 py-3 md:table-cell">Requested By</th>
-                <th className="hidden px-4 py-3 lg:table-cell">Date</th>
+                <th className="hidden px-4 py-3 lg:table-cell">Submitted</th>
+                <th className="hidden px-4 py-3 lg:table-cell">Approved On</th>
                 {isAdmin ? <th className="px-4 py-3 text-right">Actions</th> : null}
               </tr>
             </thead>
@@ -184,6 +185,12 @@ export function BudgetsScreen() {
                   </td>
                   <td className="hidden px-4 py-3 text-slate-400 lg:table-cell">
                     {formatDate(demand.createdAt)}
+                  </td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
+                    {demand.status === "Approved" && demand.reviewedAt
+                      ? <span className="text-emerald-400">{formatDate(demand.reviewedAt)}</span>
+                      : <span className="text-slate-600">—</span>
+                    }
                   </td>
                   {isAdmin ? (
                     <td className="px-4 py-3 text-right">
