@@ -157,6 +157,9 @@ export function DashboardScreen() {
 
   useEffect(() => {
     load();
+    // Keep dashboard live — poll every 30 seconds
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   if (loading) {
@@ -214,7 +217,7 @@ export function DashboardScreen() {
       adminOnly: true,
     },
     {
-      label: "Pending Budget Demands",
+      label: "Awaiting Approval (Budgets)",
       value: formatCurrency(financialSnapshot.totalPendingBudgetDemands),
       icon: <ClipboardList className="h-5 w-5 text-amber-400" />,
     },
