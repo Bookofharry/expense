@@ -1,4 +1,4 @@
-import { clearStoredSession } from "./storage";
+import { clearStoredSession, markSessionExpired } from "./storage";
 import type {
   ApiEnvelope,
   AppSetting,
@@ -47,13 +47,18 @@ interface RequestOptions {
   body?: Record<string, unknown>;
 }
 
-function handleSessionExpiry() {
+// Clears the dead session, arms a one-time notice for the login screen, and
+// hard-navigates there. Callers get a promise that never resolves — the page
+// is about to unload, so there's nothing useful left for them to render.
+function handleSessionExpiry<T>(): Promise<T> {
   clearStoredSession();
+  markSessionExpired();
   window.location.replace("/login");
+  return new Promise<T>(() => {});
 }
 
-async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+async function rawFetch(path: string, options: RequestOptions = {}): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, {
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
@@ -61,11 +66,14 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
+}
+
+async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await rawFetch(path, options);
 
   // Token expired or invalidated — clear session and send to login immediately
   if (response.status === 401 && options.token) {
-    handleSessionExpiry();
-    throw new ApiError("Session expired. Please log in again.", 401);
+    return handleSessionExpiry<T>();
   }
 
   const payload = (await response.json().catch(() => null)) as ApiEnvelope<T> | null;
@@ -81,18 +89,10 @@ async function apiRequestPaginated<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<PaginatedEnvelope<T>> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  const response = await rawFetch(path, options);
 
   if (response.status === 401 && options.token) {
-    handleSessionExpiry();
-    throw new ApiError("Session expired. Please log in again.", 401);
+    return handleSessionExpiry<PaginatedEnvelope<T>>();
   }
 
   const payload = (await response.json().catch(() => null)) as PaginatedEnvelope<T> | null;
@@ -231,26 +231,23 @@ export const createEmployee = (payload: { token: string; name: string; role: str
     },
   });
 
-export const fetchSalaryPayments = (
+export const fetchSalaryPayments = async (
   token: string,
   page = 1,
   limit = 25
-): Promise<SalaryPageResponse> =>
-  fetch(
-    `${API_BASE_URL}/salary?page=${page}&limit=${limit}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  ).then(async (res) => {
-    const payload = await res.json().catch(() => null);
-    if (!res.ok || !payload?.success) {
-      throw new ApiError(payload?.message ?? "Request failed.", res.status);
-    }
-    return payload as SalaryPageResponse;
-  });
+): Promise<SalaryPageResponse> => {
+  const res = await rawFetch(`/salary?page=${page}&limit=${limit}`, { token });
+
+  if (res.status === 401) {
+    return handleSessionExpiry<SalaryPageResponse>();
+  }
+
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    throw new ApiError(payload?.message ?? "Request failed.", res.status);
+  }
+  return payload as SalaryPageResponse;
+};
 
 export const logSalaryPaymentEntry = (payload: {
   token: string;
@@ -337,24 +334,26 @@ export const updateEvent = (payload: {
 export const deleteEvent = (token: string, id: string) =>
   apiRequest<void>(`/events/${id}`, { method: "DELETE", token });
 
-export const fetchEventRegistrations = (
+export const fetchEventRegistrations = async (
   token: string,
   eventId: string,
   page = 1,
   limit = 25
-): Promise<EventRegistrationsResponse> =>
-  fetch(`${API_BASE_URL}/events/${eventId}/registrations?page=${page}&limit=${limit}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  }).then(async (res) => {
-    const payload = await res.json().catch(() => null);
-    if (!res.ok || !payload?.success) {
-      throw new ApiError(payload?.message ?? "Request failed.", res.status);
-    }
-    return payload as EventRegistrationsResponse;
+): Promise<EventRegistrationsResponse> => {
+  const res = await rawFetch(`/events/${eventId}/registrations?page=${page}&limit=${limit}`, {
+    token,
   });
+
+  if (res.status === 401) {
+    return handleSessionExpiry<EventRegistrationsResponse>();
+  }
+
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    throw new ApiError(payload?.message ?? "Request failed.", res.status);
+  }
+  return payload as EventRegistrationsResponse;
+};
 
 export const updateRegistrationStatus = (
   token: string,

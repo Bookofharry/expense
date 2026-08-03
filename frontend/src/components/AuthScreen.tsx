@@ -3,6 +3,7 @@ import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../lib/AuthContext";
+import { consumeSessionExpiredFlag } from "../lib/storage";
 
 interface AuthScreenProps {
   error?: string | null;
@@ -26,6 +27,13 @@ export function AuthScreen({ error: externalError, success: externalSuccess }: A
       navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  // Show a one-time notice if we landed here because a session expired mid-use
+  useEffect(() => {
+    if (consumeSessionExpiredFlag()) {
+      setError("Your session has expired. Please log in again.");
+    }
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
