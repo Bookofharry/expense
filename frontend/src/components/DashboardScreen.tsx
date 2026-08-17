@@ -225,6 +225,7 @@ export function DashboardScreen() {
       label: "Current Cash Position",
       value: formatCurrency(financialSnapshot.currentCashPosition),
       icon: <Wallet className="h-5 w-5 text-indigo-400" />,
+      adminOnly: true,
     },
   ].filter(card => !card.adminOnly || isAdmin);
 
@@ -252,7 +253,7 @@ export function DashboardScreen() {
       </div>
 
       {/* Financial snapshot cards */}
-      <div className={`grid gap-4 sm:grid-cols-2 ${isAdmin ? 'xl:grid-cols-3' : 'xl:grid-cols-4'}`}>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
           <div key={card.label} className="glass-subpanel p-5">
             <div className="flex items-center justify-between">
